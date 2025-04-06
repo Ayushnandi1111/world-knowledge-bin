@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>World Knowledge Bin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      background-size: 400% 400%;
+      animation: bgAnimate 10s ease infinite;
+      color: white;
+    }
+
+    @keyframes bgAnimate {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    header {
+      text-align: center;
+      padding: 40px 20px 20px;
+    }
+
+    header h1 {
+      font-size: 3em;
+      animation: fadeSlideLoop 4s ease-in-out infinite;
+    }
+
+    @keyframes fadeSlideLoop {
+      0% { opacity: 0; transform: translateY(-20px); }
+      10%, 90% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-20px); }
+    }
+
+    .section {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+
+    .news-feed {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 10px;
+      height: 200px;
+      overflow-y: auto;
+    }
+
+    .news-item {
+      margin-bottom: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 10px;
+    }
+
+    .chat-box {
+      margin-top: 20px;
+      display: flex;
+    }
+
+    .chat-box input, .chat-box select {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+    }
+
+    .chat-box input {
+      flex: 1;
+      border-radius: 5px 0 0 5px;
+    }
+
+    .chat-box select {
+      border-radius: 0;
+      background: #222;
+      color: white;
+    }
+
+    .chat-box button {
+      padding: 10px 15px;
+      font-size: 16px;
+      border: none;
+      border-radius: 0 5px 5px 0;
+      background-color: #ff69b4;
+      color: white;
+      cursor: pointer;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+    }
+
+    footer a {
+      color: #ff69b4;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🌍 World Knowledge Bin</h1>
+    <p>Real-time info. Smart answers. All in one place.</p>
+  </header>
+
+  <section class="section">
+    <h2>📰 Live News Feed</h2>
+    <div class="news-feed" id="newsFeed">Loading news...</div>
+  </section>
+
+  <section class="section">
+    <h2>💬 Ask Anything</h2>
+    <div class="chat-box">
+      <input type="text" id="userInput" placeholder="Ask your question..." />
+      <select id="langSelect">
+        <option value="en">English</option>
+        <option value="bn">বাংলা</option>
+        <option value="hi">हिन्दी</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+      </select>
+      <button onclick="replyBot()">Ask</button>
+    </div>
+    <div id="botResponse" style="margin-top: 20px; text-align: center;"></div>
+  </section>
+
+  <footer>
+    📸 Follow me on Instagram: 
+    <a href="https://www.instagram.com/kingakash1121/" target="_blank">@kingakash1121</a>
+  </footer>
+
+  <script>
+    const newsApiKey = "5f92ca749679414a9549ba0ad7063538";
+    const openAiKey = "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";
+
+    // Load news
+    window.onload = function () {
+      fetch(`https://newsapi.org/v2/top-headlines?country=us&apiKey=${newsApiKey}`)
+        .then(res => res.json())
+        .then(data => {
+          const newsFeed = document.getElementById('newsFeed');
+          newsFeed.innerHTML = '';
+          data.articles.slice(0, 5).forEach(article => {
+            const div = document.createElement('div');
+            div.className = 'news-item';
+            div.innerHTML = `<strong>${article.title}</strong><br><small>${article.source.name}</small>`;
+            newsFeed.appendChild(div);
+          });
+        })
+        .catch(err => {
+          document.getElementById('newsFeed').innerText = "❌ Failed to load news.";
+          console.error("News error:", err);
+        });
+    };
+
+    // Ask Bot
+    function replyBot() {
+      const userInput = document.getElementById("userInput").value;
+      const language = document.getElementById("langSelect").value;
+      const botResponse = document.getElementById("botResponse");
+
+      if (!userInput.trim()) {
+        botResponse.innerHTML = "❌ Please enter a question.";
+        return;
+      }
+
+      botResponse.innerHTML = "⏳ Thinking...";
+
+      fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${openAiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-3.5-turbo",
+          messages: [
+            { role: "system", content: `Reply in ${language}. You are a helpful assistant.` },
+            { role: "user", content: userInput }
+          ],
+        }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        botResponse.innerHTML = "🤖 " + data.choices[0].message.content;
+      })
+      .catch(err => {
+        botResponse.innerHTML = "❌ Failed to fetch answer.";
+        console.error(err);
+      });
+    }
+  </script>
+
+</body>
+</html>
